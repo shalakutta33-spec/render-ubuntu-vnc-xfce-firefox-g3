@@ -8,5 +8,10 @@ RUN apt-get update \
     && curl -fsSL https://tailscale.com/install.sh | sh \
     && rm -rf /var/lib/apt/lists/*
 
+COPY start.sh /start.sh
+RUN chmod +x /start.sh
+
 EXPOSE 5901
 EXPOSE 6901
+
+ENTRYPOINT ["/start.sh"]

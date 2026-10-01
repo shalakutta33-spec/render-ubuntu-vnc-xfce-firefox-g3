@@ -44,16 +44,21 @@ if echo "$STATUS" | grep -q "Logged out"; then
     echo
     echo "Tailscale is not logged in."
     echo
+    echo "Starting interactive Tailscale login..."
+    echo
 
-    docker exec -it "$CONTAINER" tailscale-login
+    docker exec -i "$CONTAINER" tailscale-login
 
 elif echo "$STATUS" | grep -q "Tailscale is stopped"; then
 
     echo
     echo "Tailscale daemon is not ready."
     echo
-    echo "Run:"
-    echo "docker exec -it $CONTAINER tailscale-login"
+    echo "Tailscale log:"
+    docker exec "$CONTAINER" tail -30 /tmp/tailscaled.log 2>/dev/null || true
+    echo
+    echo "Try again with:"
+    echo "docker exec -i $CONTAINER tailscale-login"
     exit 1
 
 else
@@ -71,6 +76,7 @@ docker exec "$CONTAINER" tailscale status
 
 echo
 echo "[6/6] Tailscale IP:"
+
 docker exec "$CONTAINER" tailscale ip -4
 
 echo

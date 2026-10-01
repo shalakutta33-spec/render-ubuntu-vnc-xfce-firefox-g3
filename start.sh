@@ -46,7 +46,7 @@ rm -rf /tmp/.X*-lock /tmp/.X11-unix/* 2>/dev/null || true
 
 echo "$VNC_PW" | vncpasswd -f > "$VNC_CONFIG_HOME/passwd"
 chmod 600 "$VNC_CONFIG_HOME/passwd"
-printf 'rfbport=%s\ndepth=%s\ngeometry=%s\n' "$VNC_PORT" "$VNC_COL_DEPTH" "$VNC_RESOLUTION" > "$VNC_CONFIG_HOME/config"
+printf 'rfbport=%s\ndepth=%s\ngeometry=%s\nBlacklistTimeout=0\n' "$VNC_PORT" "$VNC_COL_DEPTH" "$VNC_RESOLUTION" > "$VNC_CONFIG_HOME/config"
 
 echo "Starting VNC on $DISPLAY port $VNC_PORT..."
 vncserver "$DISPLAY" > /tmp/vnc.log 2>&1 &

@@ -88,8 +88,30 @@ tailscaled --tun=userspace-networking \
   --socket=/tmp/ts/tailscaled.sock \
   --state=/tmp/ts/tailscaled.state &
 sleep 3
+```
+
+Then log in — TWO separate ways, pick one:
+
+**Option 1 — manual (interactive, no key needed):**
+
+```bash
 tailscale --socket=/tmp/ts/tailscaled.sock up
 ```
+
+It prints a browser URL. Open that URL on any device already logged into
+your tailnet (phone/laptop) to approve. Good for one-off machines where
+you sit at the keyboard.
+
+**Option 2 — auth key (auto-connect, no browser):**
+
+```bash
+tailscale --socket=/tmp/ts/tailscaled.sock up --auth-key=tskey-auth-XXXX
+```
+
+Connects immediately with zero clicks. Required for headless hosts
+(Render, CI, Docker without a browser). Get the key from Tailscale admin
+→ Settings → Keys → Auth key (use reusable + ephemeral so redeploys
+don't pile up offline nodes).
 
 **Rule after that:** EVERY `tailscale` call needs the flag:
 `tailscale --socket=/tmp/ts/tailscaled.sock status|ip|logout|...`

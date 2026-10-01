@@ -46,11 +46,16 @@ echo
 fi
 
 echo "Preparing writable dirs (/data, /tmp)..."
-mkdir -p /data/.config/tigervnc /data/.cache/Tailscale /tmp
+mkdir -p /data/.config/tigervnc /data/.cache/Tailscale /tmp /tmp/.X11-unix "$HOME/.vnc" 2>/dev/null || true
+chmod 777 /tmp /tmp/.X11-unix 2>/dev/null || true
 export XDG_CONFIG_HOME=/data/.config XDG_CACHE_HOME=/data/.cache VNC_CONFIG_HOME=/data/.config/tigervnc
+export NOVNC_HEARTBEAT=${NOVNC_HEARTBEAT:-30}
 # best-effort: keep symlinks if base image layout changed (rootfs may be RO, ignore errors)
 if [ ! -L /home/headless/.config ]; then rm -rf /home/headless/.config 2>/dev/null; ln -s /data/.config /home/headless/.config 2>/dev/null || true; fi
 if [ ! -L /home/headless/.cache ]; then rm -rf /home/headless/.cache 2>/dev/null; ln -s /data/.cache /home/headless/.cache 2>/dev/null || true; fi
 
 echo "Starting Accetto..."
+# ponytail: tail Accetto logs to stdout so Render shows VNC/websockify errors
+touch /tmp/vnc.log /tmp/novnc.log 2>/dev/null || true
+tail -F /tmp/vnc.log /tmp/novnc.log /tmp/tailscaled.log 2>/dev/null &
 exec /usr/bin/tini -- /dockerstartup/startup.sh

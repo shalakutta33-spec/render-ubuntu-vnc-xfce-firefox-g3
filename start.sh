@@ -1,23 +1,35 @@
-services:
-  ubuntu-firefox:
-    build:
-      context: .
-      dockerfile: Dockerfile
+#!/bin/bash
+set -e
 
-    container_name: ubuntu-firefox
+echo "======================================"
+echo " Ubuntu XFCE Firefox + Tailscale"
+echo "======================================"
 
-    ports:
-      - "7902:6901"
-      - "5903:5901"
+echo
+echo "[1/3] Starting Tailscale daemon..."
 
-    cap_add:
-      - NET_ADMIN
-      - NET_RAW
+tailscaled >/tmp/tailscaled.log 2>&1 &
 
-    devices:
-      - /dev/net/tun:/dev/net/tun
+sleep 3
 
-    environment:
-      TS_AUTHKEY: ${TS_AUTHKEY}
+if [ -z "$TS_AUTHKEY" ]; then
+    echo "ERROR: TS_AUTHKEY is not configured."
+    exit 1
+fi
 
-    restart: unless-stopped
+echo
+echo "[2/3] Connecting to Tailscale..."
+
+tailscale up \
+    --auth-key="$TS_AUTHKEY" \
+    --hostname="ubuntu-firefox"
+
+echo
+echo "[3/3] Tailscale IP:"
+
+tailscale ip -4
+
+echo
+echo "======================================"
+echo " Tailscale connected! ✅"
+echo "======================================"

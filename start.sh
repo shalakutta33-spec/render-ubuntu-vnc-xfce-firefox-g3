@@ -46,8 +46,6 @@ if echo "$STATUS" | grep -q "Logged out"; then
     echo "Enter your Tailscale auth key."
     echo
 
-    # Ask for the key on the host.
-    # -s hides the key while typing/pasting.
     read -rsp "Enter Tailscale auth key: " TS_KEY
     echo
 
@@ -60,7 +58,6 @@ if echo "$STATUS" | grep -q "Logged out"; then
     echo
     echo "Logging in to Tailscale..."
 
-    # Send the key through stdin to the container.
     printf '%s\n' "$TS_KEY" | \
         docker exec -i "$CONTAINER" bash -c '
             IFS= read -r TS_KEY

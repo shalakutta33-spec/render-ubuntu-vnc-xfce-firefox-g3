@@ -1,4 +1,3 @@
-```bash
 #!/bin/bash
 
 set -e
@@ -84,7 +83,6 @@ echo "======================================"
 echo " Setup complete! ✅"
 echo "======================================"
 echo
-echo "noVNC:  http://localhost:7902"
+echo "noVNC:  https://7902-cs-717088098702-default.cs-asia-southeast1-ajrg.cloudshell.dev"
 echo "VNC:    Tailscale-IP:5901"
 echo
-```

@@ -1,0 +1,20 @@
+services:
+  ubuntu-firefox:
+    build:
+      context: .
+      dockerfile: Dockerfile
+
+    container_name: ubuntu-firefox
+
+    ports:
+      - "7902:6901"
+      - "5903:5901"
+
+    cap_add:
+      - NET_ADMIN
+      - NET_RAW
+
+    devices:
+      - /dev/net/tun:/dev/net/tun
+
+    restart: unless-stopped

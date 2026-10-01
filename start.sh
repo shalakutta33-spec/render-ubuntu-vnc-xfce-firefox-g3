@@ -43,10 +43,32 @@ if echo "$STATUS" | grep -q "Logged out"; then
     echo
     echo "Tailscale is not logged in."
     echo
-    echo "Starting interactive Tailscale login..."
+    echo "Enter your Tailscale auth key."
     echo
 
-    docker exec -i "$CONTAINER" tailscale-login
+    # Ask for the key on the host.
+    # -s hides the key while typing/pasting.
+    read -rsp "Enter Tailscale auth key: " TS_KEY
+    echo
+
+    if [ -z "$TS_KEY" ]; then
+        echo
+        echo "Error: No Tailscale auth key entered."
+        exit 1
+    fi
+
+    echo
+    echo "Logging in to Tailscale..."
+
+    # Send the key through stdin to the container.
+    printf '%s\n' "$TS_KEY" | \
+        docker exec -i "$CONTAINER" bash -c '
+            IFS= read -r TS_KEY
+            tailscale up --auth-key="$TS_KEY"
+            unset TS_KEY
+        '
+
+    unset TS_KEY
 
 elif echo "$STATUS" | grep -q "Tailscale is stopped"; then
 
@@ -56,8 +78,8 @@ elif echo "$STATUS" | grep -q "Tailscale is stopped"; then
     echo "Tailscale log:"
     docker exec "$CONTAINER" tail -30 /tmp/tailscaled.log 2>/dev/null || true
     echo
-    echo "Try again with:"
-    echo "docker exec -i $CONTAINER tailscale-login"
+    echo "Try running:"
+    echo "docker exec $CONTAINER tailscaled"
     exit 1
 
 else
@@ -76,7 +98,9 @@ docker exec "$CONTAINER" tailscale status
 echo
 echo "[6/6] Tailscale IP:"
 
-docker exec "$CONTAINER" tailscale ip -4
+TAILSCALE_IP=$(docker exec "$CONTAINER" tailscale ip -4)
+
+echo "$TAILSCALE_IP"
 
 echo
 echo "======================================"
@@ -84,5 +108,5 @@ echo " Setup complete! ✅"
 echo "======================================"
 echo
 echo "noVNC:  https://7902-cs-717088098702-default.cs-asia-southeast1-ajrg.cloudshell.dev"
-echo "VNC:    Tailscale-IP:5901"
+echo "VNC:    $TAILSCALE_IP:5901"
 echo

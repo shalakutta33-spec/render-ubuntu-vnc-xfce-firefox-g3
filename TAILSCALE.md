@@ -82,19 +82,17 @@ default state dir if `$HOME` is odd.)
 
 **Fix:** put socket + state somewhere you own:
 
+Then log in — TWO separate ways, pick one (each block is complete,
+daemon start included, copy-paste as-is):
+
+**Option 1 — manual (interactive, no key needed):**
+
 ```bash
 mkdir -p /tmp/ts
 tailscaled --tun=userspace-networking \
   --socket=/tmp/ts/tailscaled.sock \
   --state=/tmp/ts/tailscaled.state &
 sleep 3
-```
-
-Then log in — TWO separate ways, pick one:
-
-**Option 1 — manual (interactive, no key needed):**
-
-```bash
 tailscale --socket=/tmp/ts/tailscaled.sock up
 ```
 
@@ -105,6 +103,11 @@ you sit at the keyboard.
 **Option 2 — auth key (auto-connect, no browser):**
 
 ```bash
+mkdir -p /tmp/ts
+tailscaled --tun=userspace-networking \
+  --socket=/tmp/ts/tailscaled.sock \
+  --state=/tmp/ts/tailscaled.state &
+sleep 3
 tailscale --socket=/tmp/ts/tailscaled.sock up --auth-key=tskey-auth-XXXX
 ```
 

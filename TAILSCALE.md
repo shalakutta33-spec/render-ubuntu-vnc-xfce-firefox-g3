@@ -85,6 +85,10 @@ default state dir if `$HOME` is odd.)
 Then log in — TWO separate ways, pick one (each block is complete,
 daemon start included, copy-paste as-is):
 
+> TL;DR: plain `tailscale up` = connect via link, log into your account in
+> the browser to approve; `tailscale up --auth-key=...` = auto-connect, no
+> link, no login, no hassle.
+
 **Option 1 — manual (interactive, no key needed):**
 
 ```bash

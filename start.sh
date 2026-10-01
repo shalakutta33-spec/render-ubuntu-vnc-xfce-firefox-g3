@@ -5,10 +5,14 @@ echo "======================================"
 echo " Ubuntu XFCE + Firefox + Tailscale"
 echo "======================================"
 
-if [ -z "$TS_AUTHKEY" ]; then
-    echo "ERROR: TS_AUTHKEY is not set."
-    exit 1
+if [ -n "$PORT" ]; then
+    export NOVNC_PORT="$PORT"
+    echo "Render PORT=$PORT -> NOVNC_PORT=$PORT"
 fi
+
+if [ -z "$TS_AUTHKEY" ]; then
+    echo "WARN: TS_AUTHKEY not set, skipping Tailscale."
+else
 
 echo "[1/3] Starting Tailscale daemon..."
 
@@ -38,6 +42,8 @@ echo
 echo "Tailscale IP:"
 tailscale --socket=/tmp/tailscaled.sock ip -4
 echo
+
+fi
 
 echo "Preparing writable dirs (/data, /tmp)..."
 mkdir -p /data/.config/tigervnc /data/.cache/Tailscale /tmp

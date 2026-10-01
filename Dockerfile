@@ -8,7 +8,7 @@ RUN apt-get update \
     && curl -fsSL https://tailscale.com/install.sh | sh \
     && rm -rf /var/lib/apt/lists/*
 
-# Create interactive Tailscale login helper
+# Interactive Tailscale login
 RUN printf '%s\n' \
     '#!/bin/bash' \
     'read -rsp "Enter Tailscale auth key: " TS_KEY' \

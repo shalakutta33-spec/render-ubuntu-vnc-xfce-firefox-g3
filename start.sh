@@ -39,5 +39,12 @@ echo "Tailscale IP:"
 tailscale --socket=/tmp/tailscaled.sock ip -4
 echo
 
+echo "Preparing writable dirs (/data, /tmp)..."
+mkdir -p /data/.config/tigervnc /data/.cache/Tailscale /tmp
+export XDG_CONFIG_HOME=/data/.config XDG_CACHE_HOME=/data/.cache VNC_CONFIG_HOME=/data/.config/tigervnc
+# best-effort: keep symlinks if base image layout changed (rootfs may be RO, ignore errors)
+if [ ! -L /home/headless/.config ]; then rm -rf /home/headless/.config 2>/dev/null; ln -s /data/.config /home/headless/.config 2>/dev/null || true; fi
+if [ ! -L /home/headless/.cache ]; then rm -rf /home/headless/.cache 2>/dev/null; ln -s /data/.cache /home/headless/.cache 2>/dev/null || true; fi
+
 echo "Starting Accetto..."
 exec /usr/bin/tini -- /dockerstartup/startup.sh

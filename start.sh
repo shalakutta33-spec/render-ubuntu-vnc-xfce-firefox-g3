@@ -5,8 +5,7 @@ echo "======================================"
 echo " Ubuntu XFCE Firefox + Tailscale"
 echo "======================================"
 
-echo
-echo "[1/3] Starting Tailscale daemon..."
+echo "[1/3] Starting Tailscale..."
 
 tailscaled >/tmp/tailscaled.log 2>&1 &
 
@@ -17,19 +16,20 @@ if [ -z "$TS_AUTHKEY" ]; then
     exit 1
 fi
 
-echo
 echo "[2/3] Connecting to Tailscale..."
 
 tailscale up \
     --auth-key="$TS_AUTHKEY" \
     --hostname="ubuntu-firefox"
 
-echo
-echo "[3/3] Tailscale IP:"
+echo "[3/3] Tailscale connected!"
 
+echo
+echo "Tailscale IP:"
 tailscale ip -4
 
 echo
-echo "======================================"
-echo " Tailscale connected! ✅"
-echo "======================================"
+tailscale status
+
+# IMPORTANT:
+# The original XFCE/noVNC startup process must continue here.

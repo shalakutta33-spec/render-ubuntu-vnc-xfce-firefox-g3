@@ -137,7 +137,10 @@ Means: CLI looked for the daemon at the default socket
 `/tmp/tailscaled.sock` (Render) or `/tmp/ts/tailscaled.sock` (non-root
 setup). Daemon is running; CLI just knocked on the wrong door.
 
-Solution code — add `--socket=` with the real path to every command:
+Solution code — plain `tailscale status` will NOT work here, it always
+fails with the error above. You must run it WITH the socket flag, then it
+shows the status normally. Add `--socket=` with the real path to every
+command:
 
 ```bash
 tailscale --socket=/tmp/tailscaled.sock status

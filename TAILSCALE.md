@@ -176,7 +176,31 @@ Socket is `/tmp/tailscaled.sock`, state `/tmp/tailscaled.state`. In Shell:
 ```bash
 tailscale --socket=/tmp/tailscaled.sock status
 tailscale --socket=/tmp/tailscaled.sock ip -4
+tailscale --socket=/tmp/tailscaled.sock set --ssh
 ```
+
+Enable SSH, then connect from any tailnet device:
+
+```bash
+tailscale ssh ubuntu-firefox-23
+```
+
+Exact errors we hit here and their fixes:
+
+```
+Failed to connect to local Tailscale daemon for /localapi/v0/status;
+not running? Error: dial unix /var/run/tailscale/tailscaled.sock:
+connect: no such file or directory
+```
+= CLI looked at the DEFAULT socket, but our daemon listens on
+`/tmp/tailscaled.sock`. Fix: add `--socket=/tmp/tailscaled.sock` to
+every command (see above). No output after `set --ssh` = success.
+
+```
+bash: $'\E[200~tailscale': command not found
+```
+= pasted text carried terminal bracketed-paste codes (`^[200~`) plus a
+trailing `~`. Fix: `Ctrl+C`, retype the command cleanly with no `~`.
 
 ## 6. Auth keys
 

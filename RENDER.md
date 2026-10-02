@@ -9,7 +9,7 @@ Live URL pattern: `https://<service>.onrender.com` → noVNC landing →
 
 1. Render Dashboard → `New` → `Web Service`
 2. `Build and deploy from a GitHub repository` → select
-   `shalakutta33-spec/ubuntu-vnc-xfce-g3`, branch `main`
+   `shalakutta33-spec/render-ubuntu-vnc-xfce-firefox-g3`, branch `main`
 3. Settings:
    - `Environment`: `Docker`
    - `Dockerfile Path`: `./Dockerfile`

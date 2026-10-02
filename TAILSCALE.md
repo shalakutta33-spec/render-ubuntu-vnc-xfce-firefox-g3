@@ -248,8 +248,14 @@ tailscaled --tun=userspace-networking \
 ```
 
 What changed: one added flag, `--statedir=/tmp/ts-var` (plus `mkdir`).
-Pushed as `07653eb`, redeploy, and the `no var root` warning disappears —
-`tailscale ssh root@ubuntu-firefox-2N` then lands in a shell.
+Pushed as `07653eb`, redeploy, and the `no var root` warning disappears.
+Verified live:
+
+```bash
+$ tailscale ssh root@ubuntu-firefox-27 "whoami; hostname"
+root
+srv-davb3vrbc2fs73c6jjf0-hibernate-c78d5df97-htjdn
+```
 
 ## 8. Harmless lines (ignore these)
 

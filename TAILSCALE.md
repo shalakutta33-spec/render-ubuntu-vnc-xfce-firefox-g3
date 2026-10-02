@@ -124,7 +124,49 @@ don't pile up offline nodes).
 `tailscale --socket=/tmp/ts/tailscaled.sock status|ip|logout|...`
 Forgetting it gives back error §1 (it looks at the wrong path).
 
-## 4. Harmless lines (ignore these)
+## 4. Problem: CLI talks to the wrong socket
+
+```
+Failed to connect to local Tailscale daemon for /localapi/v0/status;
+not running? Error: dial unix /var/run/tailscale/tailscaled.sock:
+connect: no such file or directory
+```
+
+**What's the problem:** the daemon IS running, but on a custom socket
+(e.g. `/tmp/tailscaled.sock` on Render, `/tmp/ts/tailscaled.sock` for
+non-root users). The CLI defaults to `/var/run/tailscale/tailscaled.sock`,
+finds nothing there, and reports "not running".
+
+**Fix:** point every command at the real socket:
+
+```bash
+tailscale --socket=/tmp/tailscaled.sock status
+tailscale --socket=/tmp/tailscaled.sock ip -4
+tailscale --socket=/tmp/tailscaled.sock set --ssh
+```
+
+No output after `set --ssh` = success. Then from any tailnet device:
+`tailscale ssh ubuntu-firefox-23`.
+
+## 5. Problem: pasted command not found
+
+```
+bash: $'\E[200~tailscale': command not found
+```
+
+**What's the problem:** the paste carried terminal bracketed-paste control
+codes (`ESC[200~` shown as `^[[200~`) plus a trailing `~`, so bash treated
+the whole blob as the command name. Not a Tailscale problem at all — a
+terminal paste glitch.
+
+**Fix:** press `Ctrl+C`, retype the command cleanly by hand with no
+trailing `~`:
+
+```bash
+tailscale --socket=/tmp/tailscaled.sock set --ssh
+```
+
+## 6. Harmless lines (ignore these)
 
 | Line | Meaning |
 |---|---|
@@ -136,7 +178,7 @@ Forgetting it gives back error §1 (it looks at the wrong path).
 | `logtail: upload ... failed 429` | Tailscale's own telemetry rate-limited. Ignore. |
 | ` flushing log. / logger closing down` after an error | daemon shutting down because of the real error above — read upward, not these. |
 
-## 5. Exact sequences (copy-paste)
+## 7. Exact sequences (copy-paste)
 
 ### A. Container as root (Docker `root@...`, Render shell)
 
@@ -179,30 +221,13 @@ tailscale --socket=/tmp/tailscaled.sock ip -4
 tailscale --socket=/tmp/tailscaled.sock set --ssh
 ```
 
-Enable SSH, then connect from any tailnet device:
+Enable SSH (no output = success), then connect from any tailnet device:
 
 ```bash
 tailscale ssh ubuntu-firefox-23
 ```
 
-Exact errors we hit here and their fixes:
-
-```
-Failed to connect to local Tailscale daemon for /localapi/v0/status;
-not running? Error: dial unix /var/run/tailscale/tailscaled.sock:
-connect: no such file or directory
-```
-= CLI looked at the DEFAULT socket, but our daemon listens on
-`/tmp/tailscaled.sock`. Fix: add `--socket=/tmp/tailscaled.sock` to
-every command (see above). No output after `set --ssh` = success.
-
-```
-bash: $'\E[200~tailscale': command not found
-```
-= pasted text carried terminal bracketed-paste codes (`^[200~`) plus a
-trailing `~`. Fix: `Ctrl+C`, retype the command cleanly with no `~`.
-
-## 6. Auth keys
+## 8. Auth keys
 
 * Interactive `tailscale up` prints a browser URL — open it on a logged-in
   device. Works once.
@@ -215,7 +240,7 @@ trailing `~`. Fix: `Ctrl+C`, retype the command cleanly with no `~`.
   per deploy — use MagicDNS (`ubuntu-firefox.<tailnet>.ts.net`) or check
   `ip -4` after each deploy.
 
-## 7. How we debugged this session (order)
+## 9. How we debugged this session (order)
 
 1. `tailscale up` → §1 error → daemon not running.
 2. Started daemon bare → exited, top error = socket `bind: no such file` (§3),

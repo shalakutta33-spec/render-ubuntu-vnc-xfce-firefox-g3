@@ -126,18 +126,18 @@ Forgetting it gives back error §1 (it looks at the wrong path).
 
 ## 4. Problem: CLI talks to the wrong socket
 
+Error 1 (wrong socket):
+
 ```
-Failed to connect to local Tailscale daemon for /localapi/v0/status;
-not running? Error: dial unix /var/run/tailscale/tailscaled.sock:
-connect: no such file or directory
+Failed to connect to local Tailscale daemon for /localapi/v0/status; not running? Error: dial unix /var/run/tailscale/tailscaled.sock: connect: no such file or directory
 ```
 
-**What's the problem:** the daemon IS running, but on a custom socket
-(e.g. `/tmp/tailscaled.sock` on Render, `/tmp/ts/tailscaled.sock` for
-non-root users). The CLI defaults to `/var/run/tailscale/tailscaled.sock`,
-finds nothing there, and reports "not running".
+Means: CLI looked for the daemon at the default socket
+`/var/run/tailscale/tailscaled.sock`, nothing there — ours listens on
+`/tmp/tailscaled.sock` (Render) or `/tmp/ts/tailscaled.sock` (non-root
+setup). Daemon is running; CLI just knocked on the wrong door.
 
-**Fix:** point every command at the real socket:
+Solution code — add `--socket=` with the real path to every command:
 
 ```bash
 tailscale --socket=/tmp/tailscaled.sock status
@@ -150,17 +150,18 @@ No output after `set --ssh` = success. Then from any tailnet device:
 
 ## 5. Problem: pasted command not found
 
+Error 2 (bad paste):
+
 ```
 bash: $'\E[200~tailscale': command not found
 ```
 
-**What's the problem:** the paste carried terminal bracketed-paste control
-codes (`ESC[200~` shown as `^[[200~`) plus a trailing `~`, so bash treated
-the whole blob as the command name. Not a Tailscale problem at all — a
-terminal paste glitch.
+Means: pasted text carried terminal bracketed-paste control codes
+(`ESC[200~`, shown as `^[[200~`) plus a trailing `~`, so bash treated the
+whole blob as the command name. Not a Tailscale problem — a terminal
+paste glitch.
 
-**Fix:** press `Ctrl+C`, retype the command cleanly by hand with no
-trailing `~`:
+Solution code — press `Ctrl+C`, retype cleanly with no `~`:
 
 ```bash
 tailscale --socket=/tmp/tailscaled.sock set --ssh

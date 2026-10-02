@@ -268,6 +268,7 @@ srv-davb3vrbc2fs73c6jjf0-hibernate-c78d5df97-htjdn
 | `peerapi: unknown peer 127.0.0.1` (+ RATELIMIT) | something (Render health checks) probing Tailscale's local API port. Noise. |
 | `logtail: upload ... failed 429` | Tailscale's own telemetry rate-limited. Ignore. |
 | ` flushing log. / logger closing down` after an error | daemon shutting down because of the real error above — read upward, not these. |
+| `Dial ... 502 Bad Gateway ... connectex` on `tailscale ssh` from laptop | target node asleep (Render Free hibernates) or restarted with a new IP — open the `.onrender.com` URL to wake it, recheck `tailscale status` for the newest online node, retry. |
 
 ## 9. Exact sequences (copy-paste)
 
@@ -304,7 +305,10 @@ curl -fsSL https://tailscale.com/install.sh | sh && mkdir -p /tmp/ts && (tailsca
 
 ### C. This repo on Render (`start.sh` already does it)
 
-Socket is `/tmp/tailscaled.sock`, state `/tmp/tailscaled.state`. In Shell:
+Daemon (with `--statedir` so SSH host keys persist, §7), `up`, and
+`set --ssh` all run on every boot — nothing manual needed as long as
+`TS_AUTHKEY` is set. Socket is `/tmp/tailscaled.sock`,
+state `/tmp/tailscaled.state`. In Shell:
 
 ```bash
 tailscale --socket=/tmp/tailscaled.sock status
@@ -317,6 +321,12 @@ Enable SSH (no output = success), then connect from any tailnet device:
 ```bash
 tailscale ssh ubuntu-firefox-23
 ```
+
+Termius (phone): Tailscale app connected first, then new host →
+Address `100.x`, Port `22`, Username `root`, no password (forced one?
+username `root+password`, password `x`). Cellular trouble: Termius
+Settings → Sessions → `Experimental Connection Process` on, Keepalive
+`500`.
 
 ## 10. Auth keys
 

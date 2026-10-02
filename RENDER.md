@@ -34,8 +34,9 @@ Live URL pattern: `https://<service>.onrender.com` → noVNC landing →
 
 1. Tailscale (skipped if no `TS_AUTHKEY`):
    `tailscaled --tun=userspace-networking --state=/tmp/tailscaled.state
-   --socket=/tmp/tailscaled.sock`, then `tailscale up`. Socket is
-   `/tmp/tailscaled.sock` — **not** the default
+   --statedir=/tmp/ts-var --socket=/tmp/tailscaled.sock`, then
+   `tailscale up` + `tailscale set --ssh` (SSH on at every boot).
+   Socket is `/tmp/tailscaled.sock` — **not** the default
    `/var/run/tailscale/tailscaled.sock`, so every CLI call needs
    `tailscale --socket=/tmp/tailscaled.sock ...`.
 2. Writes TigerVNC config (`$VNC_CONFIG_HOME/config` = `rfbport, depth,
@@ -75,9 +76,8 @@ Live URL pattern: `https://<service>.onrender.com` → noVNC landing →
   noise. Ignore.
 * `It looks like we don't have access to your repo` at build start →
   harmless warning Render prints on public repos; clone still succeeds.
-* Free plan: no Shell/SSH (needs Starter+), instance sleeps on idle, logs
-  kept briefly. Shell in this repo's history ran as `root@...` on a paid
-  plan — on Free use Logs tab only.
+* Free plan: no Shell (needs Starter+ — Shell appears if you trial/upgrade),
+  instance sleeps on idle, logs kept briefly. Without Shell use Logs tab only.
 
 ## 6. Tailscale (tailnet access)
 
@@ -87,6 +87,13 @@ Live URL pattern: `https://<service>.onrender.com` → noVNC landing →
 * From any tailnet device (your phone/desktop online in `status`):
   browser → `http://100.x:10000/vnc.html` (password = `VNC_PW`),
   or VNC viewer → `100.x:5901`.
+* SSH over tailnet (on at every boot via `set --ssh` in `start.sh`):
+  `tailscale ssh root@ubuntu-firefox-N` (or `root@100.x`). Needs an
+  `accept` SSH rule in admin → Access controls (see `TAILSCALE.md` §6–§7).
+* Termius (phone): new host → Address `100.x`, Port `22`, Username `root`,
+  no password (if it forces one: username `root+password`, password `x`).
+  Phone needs the Tailscale app connected. On cellular trouble: Termius
+  Settings → Sessions → `Experimental Connection Process` on, Keepalive `500`.
 * IP/hostname changes each deploy (`-23` = 23rd registration). Fix: delete
   dead `ubuntu-firefox-N` offline nodes in Tailscale admin, use an
   ephemeral+reusable key, and use MagicDNS

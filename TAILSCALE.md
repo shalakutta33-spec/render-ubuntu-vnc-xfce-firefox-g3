@@ -275,22 +275,7 @@ srv-davb3vrbc2fs73c6jjf0-hibernate-c78d5df97-htjdn
 
 ## 9. Exact sequences (copy-paste)
 
-### A. Container as root (Docker `root@...`, Render shell)
-
-```bash
-curl -fsSL https://tailscale.com/install.sh | sh
-tailscaled --tun=userspace-networking &
-sleep 3
-tailscale up
-```
-
-Headless (needs key, no browser):
-
-```bash
-curl -fsSL https://tailscale.com/install.sh | sh && (tailscaled --tun=userspace-networking >/tmp/tailscaled.log 2>&1 & sleep 3; tailscale up --auth-key=tskey-auth-XXXX)
-```
-
-### B. Container/VM as normal user (`abc@...`, no root)
+### A. Any user, root or not (uniform — always explicit socket)
 
 ```bash
 curl -fsSL https://tailscale.com/install.sh | sh
@@ -300,11 +285,31 @@ sleep 3
 tailscale --socket=/tmp/ts/tailscaled.sock up
 ```
 
-One-liner:
+Rule: the daemon was started on `/tmp/ts/tailscaled.sock`, so EVERY
+client command — `up`, `status`, `ip`, `set --ssh` — needs the same
+`--socket=/tmp/ts/tailscaled.sock` flag. Bare `tailscale up` / bare
+`tailscale status` always fail here (default socket, §4). There is no
+case where the bare form works with this daemon line — root or non-root.
+
+Headless (needs key, no browser):
 
 ```bash
-curl -fsSL https://tailscale.com/install.sh | sh && mkdir -p /tmp/ts && (tailscaled --tun=userspace-networking --socket=/tmp/ts/tailscaled.sock --state=/tmp/ts/tailscaled.state >/tmp/ts/tailscaled.log 2>&1 & sleep 3; tailscale --socket=/tmp/ts/tailscaled.sock up)
+curl -fsSL https://tailscale.com/install.sh | sh && mkdir -p /tmp/ts && (tailscaled --tun=userspace-networking --socket=/tmp/ts/tailscaled.sock --state=/tmp/ts/tailscaled.state >/tmp/ts/tailscaled.log 2>&1 & sleep 3; tailscale --socket=/tmp/ts/tailscaled.sock up --auth-key=tskey-auth-XXXX)
 ```
+
+### B. System install with working default socket (rare — full VM with systemd)
+
+Only if `sudo systemctl start tailscaled` actually works (real VM, not a
+container) do the bare forms apply:
+
+```bash
+curl -fsSL https://tailscale.com/install.sh | sh
+sudo systemctl enable --now tailscaled
+tailscale up
+```
+
+If that `up` gives error §1, you're in container-land after all — go back
+to §A above.
 
 ### C. This repo on Render (`start.sh` already does it)
 

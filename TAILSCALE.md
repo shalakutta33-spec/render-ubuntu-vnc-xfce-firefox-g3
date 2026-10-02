@@ -243,8 +243,18 @@ tailscale ssh ubuntu-firefox-23
 
 ## 9. How we debugged this session (order)
 
-1. `tailscale up` → §1 error → daemon not running.
-2. Started daemon bare → exited, top error = socket `bind: no such file` (§3),
-   not TUN (§2) — because user was non-root.
-3. Moved socket+state to `/tmp/ts` → daemon stayed up → `tailscale up`
+1. Ran `tailscale up` → got Error §1 (`failed to connect to local
+   tailscaled`). That only says "no daemon on the socket" — not WHY.
+2. Started the daemon in foreground (`tailscaled --tun=userspace-networking`,
+   no `&`) and read the FIRST error lines at the top of its output
+   (not the `flushing log / logger closing down` tail). Top line was the
+   socket `bind: no such file or directory` (§3) — that named the real
+   cause; everything below was just shutdown noise.
+3. Confirmed by running the client against the real socket:
+   `tailscale --socket=/tmp/ts/tailscaled.sock status` → daemon answered
+   → moved socket+state to `/tmp/ts` permanently → `tailscale up`
    → `100.x` → `status: Logged in`. Done.
+
+Rule: `tailscale up` shows the symptom; the daemon's own first lines
+(or `tailscale --socket=<real> status` answering vs refusing) show the
+cause.

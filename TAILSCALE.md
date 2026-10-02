@@ -219,7 +219,39 @@ Solution code — admin → Access controls, flip `check` to `accept`:
 Save, wait a minute, retry `tailscale ssh ubuntu-firefox-26` → drops
 straight into a shell. Verify inside with `whoami; hostname`.
 
-## 7. Harmless lines (ignore these)
+## 7. Problem: SSH disabled — `no var root for ssh keys`
+
+Error 4 (SSH host keys missing) — in deploy logs after boot:
+
+```
+warning: unable to get SSH host keys, SSH will appear as disabled for
+this node: no var root for ssh keys
+```
+
+Means: `RunSSH=true` was set, but the daemon had nowhere writable to
+store SSH host keys. Tailscale's default var root (`/var/lib/tailscale`)
+isn't usable inside this container, so the daemon silently advertised
+SSH as **disabled** — dials hung forever with zero server-side `SSH:`
+lines, even with the ACL on `accept` and ping working. This was the
+deeper cause underneath §6: fixing the ACL alone couldn't help while the
+server had no host keys.
+
+Solution code — where: `start.sh`, the `tailscaled` launch line. Give the
+daemon a writable state dir:
+
+```bash
+mkdir -p /tmp/ts-var
+tailscaled --tun=userspace-networking \
+  --state=/tmp/tailscaled.state \
+  --statedir=/tmp/ts-var \
+  --socket=/tmp/tailscaled.sock >/tmp/tailscaled.log 2>&1 &
+```
+
+What changed: one added flag, `--statedir=/tmp/ts-var` (plus `mkdir`).
+Pushed as `07653eb`, redeploy, and the `no var root` warning disappears —
+`tailscale ssh root@ubuntu-firefox-2N` then lands in a shell.
+
+## 8. Harmless lines (ignore these)
 
 | Line | Meaning |
 |---|---|
@@ -231,7 +263,7 @@ straight into a shell. Verify inside with `whoami; hostname`.
 | `logtail: upload ... failed 429` | Tailscale's own telemetry rate-limited. Ignore. |
 | ` flushing log. / logger closing down` after an error | daemon shutting down because of the real error above — read upward, not these. |
 
-## 8. Exact sequences (copy-paste)
+## 9. Exact sequences (copy-paste)
 
 ### A. Container as root (Docker `root@...`, Render shell)
 
@@ -280,7 +312,7 @@ Enable SSH (no output = success), then connect from any tailnet device:
 tailscale ssh ubuntu-firefox-23
 ```
 
-## 9. Auth keys
+## 10. Auth keys
 
 * Interactive `tailscale up` prints a browser URL — open it on a logged-in
   device. Works once.
@@ -293,7 +325,7 @@ tailscale ssh ubuntu-firefox-23
   per deploy — use MagicDNS (`ubuntu-firefox.<tailnet>.ts.net`) or check
   `ip -4` after each deploy.
 
-## 10. How we debugged this session (order)
+## 11. How we debugged this session (order)
 
 1. Ran `tailscale up` → got Error §1 (`failed to connect to local
    tailscaled`). That only says "no daemon on the socket" — not WHY.

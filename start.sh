@@ -26,7 +26,8 @@ if [ -z "$TS_AUTHKEY" ]; then
 else
     echo "[1/3] Starting Tailscale daemon..."
     rm -f /tmp/tailscaled.sock
-    tailscaled --tun=userspace-networking --state=/tmp/tailscaled.state --socket=/tmp/tailscaled.sock >/tmp/tailscaled.log 2>&1 &
+    mkdir -p /tmp/ts-var
+    tailscaled --tun=userspace-networking --state=/tmp/tailscaled.state --statedir=/tmp/ts-var --socket=/tmp/tailscaled.sock >/tmp/tailscaled.log 2>&1 &
     TAILSCALED_PID=$!
     sleep 3
     cat /tmp/tailscaled.log || true

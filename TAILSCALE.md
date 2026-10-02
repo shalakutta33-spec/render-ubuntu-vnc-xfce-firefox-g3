@@ -250,10 +250,20 @@ tailscale ssh ubuntu-firefox-23
    (not the `flushing log / logger closing down` tail). Top line was the
    socket `bind: no such file or directory` (§3) — that named the real
    cause; everything below was just shutdown noise.
-3. Confirmed by running the client against the real socket:
-   `tailscale --socket=/tmp/ts/tailscaled.sock status` → daemon answered
-   → moved socket+state to `/tmp/ts` permanently → `tailscale up`
-   → `100.x` → `status: Logged in`. Done.
+3. Fixed it with these exact commands (socket+state moved somewhere owned):
+
+```bash
+mkdir -p /tmp/ts
+tailscaled --tun=userspace-networking \
+  --socket=/tmp/ts/tailscaled.sock \
+  --state=/tmp/ts/tailscaled.state &
+sleep 3
+tailscale --socket=/tmp/ts/tailscaled.sock up
+```
+
+Confirmed: `tailscale --socket=/tmp/ts/tailscaled.sock status` → daemon
+answered → `tailscale --socket=/tmp/ts/tailscaled.sock ip -4` → `100.x`
+→ `status: Logged in`. Done.
 
 Rule: `tailscale up` shows the symptom; the daemon's own first lines
 (or `tailscale --socket=<real> status` answering vs refusing) show the

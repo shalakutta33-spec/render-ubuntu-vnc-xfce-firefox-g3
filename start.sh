@@ -35,6 +35,7 @@ else
     else
         echo "[2/3] Connecting to Tailscale..."
         tailscale --socket=/tmp/tailscaled.sock up --auth-key="$TS_AUTHKEY" --hostname="ubuntu-firefox" --accept-dns=false || echo "WARN: tailscale up failed, continuing."
+        tailscale --socket=/tmp/tailscaled.sock set --ssh || echo "WARN: tailscale ssh enable failed, continuing."
         echo "Tailscale IP:"; tailscale --socket=/tmp/tailscaled.sock ip -4 || true
     fi
 fi

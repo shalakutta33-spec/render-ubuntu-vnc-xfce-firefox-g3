@@ -312,6 +312,28 @@ client command — `up`, `status`, `ip`, `set --ssh` — needs the same
 `tailscale status` always fail here (default socket, §4). There is no
 case where the bare form works with this daemon line — root or non-root.
 
+If `up` answers with this instead of logging in:
+
+```
+Error: changing settings via 'tailscale up' requires mentioning all
+non-default flags. To proceed, either re-run your command with --reset
+or use the command below ...
+        tailscale up --auth-key=... --ssh
+```
+
+it means the saved prefs already carry a non-default flag (usually
+`--ssh` from an earlier `set --ssh`). Fix: do what it says — append
+`--ssh` to your `up`:
+
+```bash
+tailscale --socket=/tmp/ts/tailscaled.sock up --auth-key=tskey-auth-XXXX --ssh
+```
+
+Restarting the daemon does NOT need a fresh key: the state file
+(`/tmp/ts/tailscaled.state`) already holds the auth. After
+`kill` + restart (e.g. to add `--statedir`, §7), just
+`tailscale --socket=... up --ssh` with no `--auth-key`.
+
 Headless (needs key, no browser):
 
 ```bash

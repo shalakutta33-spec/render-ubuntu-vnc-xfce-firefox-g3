@@ -167,7 +167,59 @@ Solution code — press `Ctrl+C`, retype cleanly with no `~`:
 tailscale --socket=/tmp/tailscaled.sock set --ssh
 ```
 
-## 6. Harmless lines (ignore these)
+## 6. Problem: `tailscale ssh` hangs forever, no output
+
+Error 3 (SSH hang): you run
+
+```bash
+tailscale ssh ubuntu-firefox-26
+```
+
+and nothing happens — no prompt, no error, just sits until timeout.
+Meanwhile `tailscale ping --c=3 ubuntu-firefox-26` answers fine:
+
+```
+pong from ubuntu-firefox-26 (100.88.32.16) via DERP(sea) in 257ms
+```
+
+Means: L3 (WireGuard) is healthy — ping proves packets flow. The SSH
+layer (L7) never answers. Diagnose in this order, by running:
+
+1. `tailscale --socket=/tmp/tailscaled.sock debug prefs | grep -i ssh`
+   → expect `"RunSSH": true`. If false, the server flag never got set
+   (our `start.sh` runs `tailscale ... set --ssh` on every boot so it
+   survives restarts; a hand-run `set --ssh` dies with the container).
+2. If `RunSSH` is true, the block is your tailnet **SSH access rule**.
+   Ours was:
+
+```json
+{
+	"action": "check",
+	"src":    ["autogroup:member"],
+	"dst":    ["autogroup:self"],
+	"users":  ["autogroup:nonroot", "root"],
+}
+```
+
+`"action": "check"` = check mode: every new client must be approved ON
+the target device before SSH opens. A headless container has nobody to
+click approve → dial hangs forever. That was our exact hang.
+
+Solution code — admin → Access controls, flip `check` to `accept`:
+
+```json
+{
+	"action": "accept",
+	"src":    ["autogroup:member"],
+	"dst":    ["autogroup:self"],
+	"users":  ["autogroup:nonroot", "root"],
+}
+```
+
+Save, wait a minute, retry `tailscale ssh ubuntu-firefox-26` → drops
+straight into a shell. Verify inside with `whoami; hostname`.
+
+## 7. Harmless lines (ignore these)
 
 | Line | Meaning |
 |---|---|
@@ -179,7 +231,7 @@ tailscale --socket=/tmp/tailscaled.sock set --ssh
 | `logtail: upload ... failed 429` | Tailscale's own telemetry rate-limited. Ignore. |
 | ` flushing log. / logger closing down` after an error | daemon shutting down because of the real error above — read upward, not these. |
 
-## 7. Exact sequences (copy-paste)
+## 8. Exact sequences (copy-paste)
 
 ### A. Container as root (Docker `root@...`, Render shell)
 
@@ -228,7 +280,7 @@ Enable SSH (no output = success), then connect from any tailnet device:
 tailscale ssh ubuntu-firefox-23
 ```
 
-## 8. Auth keys
+## 9. Auth keys
 
 * Interactive `tailscale up` prints a browser URL — open it on a logged-in
   device. Works once.
@@ -241,7 +293,7 @@ tailscale ssh ubuntu-firefox-23
   per deploy — use MagicDNS (`ubuntu-firefox.<tailnet>.ts.net`) or check
   `ip -4` after each deploy.
 
-## 9. How we debugged this session (order)
+## 10. How we debugged this session (order)
 
 1. Ran `tailscale up` → got Error §1 (`failed to connect to local
    tailscaled`). That only says "no daemon on the socket" — not WHY.

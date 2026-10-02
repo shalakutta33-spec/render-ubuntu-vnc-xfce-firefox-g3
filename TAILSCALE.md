@@ -222,6 +222,27 @@ Solution code — admin → Access controls, flip `check` to `accept`:
 Save, wait a minute, retry `tailscale ssh ubuntu-firefox-26` → drops
 straight into a shell. Verify inside with `whoami; hostname`.
 
+Sibling error — `actively refused` instead of a hang:
+
+```
+Dial("de1799571499.taila14986.ts.net.", 22): unexpected HTTP response:
+502 Bad Gateway, dial failure: dial tcp 100.111.130.50:22: connectex:
+No connection could be made because the target machine actively refused it.
+```
+
+Means: opposite of the hang — dial REACHED the box, but nothing holds
+port 22 there. Tailscale SSH was never enabled on that target (daemon
+may be up, `up` maybe done, but no `set --ssh`). Fix ON the target:
+
+```bash
+tailscale --socket=/tmp/ts/tailscaled.sock up --auth-key=tskey-auth-XXXX
+tailscale --socket=/tmp/ts/tailscaled.sock set --ssh
+```
+
+(first line only if `status` doesn't already show Logged in). Then retry
+`tailscale ssh <name>` → shell. Rule: before any `tailscale ssh TO a
+box`, that box needs BOTH `up` (logged in) AND `set --ssh` (server on).
+
 ## 7. Problem: SSH disabled — `no var root for ssh keys`
 
 Error 4 (SSH host keys missing) — in deploy logs after boot:

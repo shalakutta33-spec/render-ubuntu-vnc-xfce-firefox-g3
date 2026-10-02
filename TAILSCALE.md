@@ -419,3 +419,33 @@ answered → `tailscale --socket=/tmp/ts/tailscaled.sock ip -4` → `100.x`
 Rule: `tailscale up` shows the symptom; the daemon's own first lines
 (or `tailscale --socket=<real> status` answering vs refusing) show the
 cause.
+
+## 12. Problem: dueling daemons — `address already in use`
+
+Error 5 — new daemon dies instantly, log top shows:
+
+```
+safesocket.Listen: /tmp/ts/tailscaled.sock: address already in use
+```
+
+Means: an older `tailscaled` is still alive holding that socket (ours was
+pid `13816` from a previous shell session). `kill %1` can't reach it —
+`%1` only knows jobs of the CURRENT shell, and answers
+`kill: %1: no such job`. Every fresh `tailscaled &` then exits on the
+taken socket while the invisible old one keeps running.
+
+Solution code — kill by NAME, clear a stale socket file, start exactly one:
+
+```bash
+pkill -9 tailscaled; sleep 2
+rm -f /tmp/ts/tailscaled.sock
+mkdir -p /tmp/ts/var
+tailscaled --tun=userspace-networking --socket=/tmp/ts/tailscaled.sock --state=/tmp/ts/tailscaled.state --statedir=/tmp/ts/var >/tmp/ts/tailscaled.log 2>&1 &
+sleep 3
+tailscale --socket=/tmp/ts/tailscaled.sock up --ssh
+tailscale --socket=/tmp/ts/tailscaled.sock status
+```
+
+Verify with `ps aux | grep tailscaled | grep -v grep` — exactly ONE line
+should remain. Never paste `<PID1>` placeholders literally (bash:
+`syntax error near unexpected token '<'`).
